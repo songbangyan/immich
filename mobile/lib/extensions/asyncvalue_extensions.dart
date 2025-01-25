@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:immich_mobile/shared/ui/immich_loading_indicator.dart';
-import 'package:immich_mobile/shared/ui/scaffold_error_body.dart';
+import 'package:immich_mobile/widgets/common/immich_loading_indicator.dart';
+import 'package:immich_mobile/widgets/common/scaffold_error_body.dart';
 import 'package:logging/logging.dart';
 
 extension LogOnError<T> on AsyncValue<T> {
   static final Logger _asyncErrorLogger = Logger("AsyncValue");
 
+  /// Used to return the [ImmichLoadingIndicator] and [ScaffoldErrorBody] widgets by default on loading
+  /// and error cases respectively
   Widget widgetWhen({
     bool skipLoadingOnRefresh = true,
     Widget Function()? onLoading,
@@ -28,8 +30,9 @@ extension LogOnError<T> on AsyncValue<T> {
     }
 
     if (hasError && !hasValue) {
-      _asyncErrorLogger.severe("Error occured", error, stackTrace);
-      return onError?.call(error, stackTrace) ?? const ScaffoldErrorBody();
+      _asyncErrorLogger.severe('Could not load value', error, stackTrace);
+      return onError?.call(error, stackTrace) ??
+          ScaffoldErrorBody(errorMsg: error?.toString());
     }
 
     return onData(requireValue);

@@ -1,7 +1,7 @@
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
-// @dart=2.12
+// @dart=2.18
 
 // ignore_for_file: unused_element, unused_import
 // ignore_for_file: always_put_required_named_parameters_first
@@ -20,7 +20,7 @@ class FileChecksumDto {
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is FileChecksumDto &&
-     other.filenames == filenames;
+    _deepEquality.equals(other.filenames, filenames);
 
   @override
   int get hashCode =>
@@ -40,12 +40,13 @@ class FileChecksumDto {
   /// [value] if it's a [Map], null otherwise.
   // ignore: prefer_constructors_over_static_methods
   static FileChecksumDto? fromJson(dynamic value) {
+    upgradeDto(value, "FileChecksumDto");
     if (value is Map) {
       final json = value.cast<String, dynamic>();
 
       return FileChecksumDto(
-        filenames: json[r'filenames'] is List
-            ? (json[r'filenames'] as List).cast<String>()
+        filenames: json[r'filenames'] is Iterable
+            ? (json[r'filenames'] as Iterable).cast<String>().toList(growable: false)
             : const [],
       );
     }

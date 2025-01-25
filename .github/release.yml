@@ -1,29 +1,33 @@
 changelog:
   categories:
-    - title: Breaking Changes 🛠
+    - title: 🚨 Breaking Changes
       labels:
-        - breaking-change
-    - title: Server
+        - changelog:breaking-change
+
+    - title: 🫥 Deprecated Changes
       labels:
-        - 🗄️server
-    - title: Mobile
+        - changelog:deprecated
+
+    - title: 🔒 Security
       labels:
-        - 📱mobile
-    - title: Web
+        - changelog:security
+
+    - title: 🚀 Features
       labels:
-        - 🖥️web
-    - title: Machine Learning
+        - changelog:feature
+
+    - title: 🌟 Enhancements
       labels:
-        - 🧠machine-learning
-    - title: CLI
+        - changelog:enhancement
+
+    - title: 🐛 Bug fixes
       labels:
-        - cli
-    - title: Documentation
+        - changelog:bugfix
+
+    - title: 📚 Documentation
       labels:
-        - documentation
-    - title: Dependency updates
+        - changelog:documentation
+
+    - title: 🌐 Translations
       labels:
-        - renovate
-    - title: Other changes
-      labels:
-        - "*"
+        - changelog:translation

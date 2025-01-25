@@ -1,5 +1,5 @@
-import { PersonEntity } from '@app/infra/entities';
-import { userStub } from './user.stub';
+import { PersonEntity } from 'src/entities/person.entity';
+import { userStub } from 'test/fixtures/user.stub';
 
 export const personStub = {
   noName: Object.freeze<PersonEntity>({
@@ -44,20 +44,6 @@ export const personStub = {
     faceAsset: null,
     isHidden: false,
   }),
-  noBirthDate: Object.freeze<PersonEntity>({
-    id: 'person-1',
-    createdAt: new Date('2021-01-01'),
-    updatedAt: new Date('2021-01-01'),
-    ownerId: userStub.admin.id,
-    owner: userStub.admin,
-    name: 'Person 1',
-    birthDate: null,
-    thumbnailPath: '/path/to/thumbnail.jpg',
-    faces: [],
-    faceAssetId: null,
-    faceAsset: null,
-    isHidden: false,
-  }),
   withBirthDate: Object.freeze<PersonEntity>({
     id: 'person-1',
     createdAt: new Date('2021-01-01'),
@@ -65,7 +51,7 @@ export const personStub = {
     ownerId: userStub.admin.id,
     owner: userStub.admin,
     name: 'Person 1',
-    birthDate: new Date('1976-06-30'),
+    birthDate: '1976-06-30',
     thumbnailPath: '/path/to/thumbnail.jpg',
     faces: [],
     faceAssetId: null,
@@ -121,6 +107,20 @@ export const personStub = {
     ownerId: userStub.admin.id,
     owner: userStub.admin,
     name: 'Person 2',
+    birthDate: null,
+    thumbnailPath: '/path/to/thumbnail',
+    faces: [],
+    faceAssetId: null,
+    faceAsset: null,
+    isHidden: false,
+  }),
+  randomPerson: Object.freeze<PersonEntity>({
+    id: 'person-3',
+    createdAt: new Date('2021-01-01'),
+    updatedAt: new Date('2021-01-01'),
+    ownerId: userStub.admin.id,
+    owner: userStub.admin,
+    name: '',
     birthDate: null,
     thumbnailPath: '/path/to/thumbnail',
     faces: [],

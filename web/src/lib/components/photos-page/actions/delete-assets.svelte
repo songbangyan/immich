@@ -1,30 +1,27 @@
 <script lang="ts">
   import CircleIconButton from '$lib/components/elements/buttons/circle-icon-button.svelte';
-  import ConfirmDialogue from '$lib/components/shared-components/confirm-dialogue.svelte';
-  import {
-    NotificationType,
-    notificationController,
-  } from '$lib/components/shared-components/notification/notification';
-  import { handleError } from '$lib/utils/handle-error';
-  import { api } from '@api';
   import MenuOption from '../../shared-components/context-menu/menu-option.svelte';
-  import { OnAssetDelete, getAssetControlContext } from '../asset-select-control-bar.svelte';
-  import { createEventDispatcher } from 'svelte';
+  import { getAssetControlContext } from '../asset-select-control-bar.svelte';
   import { featureFlags } from '$lib/stores/server-config.store';
-  import { mdiTimerSand, mdiDeleteOutline } from '@mdi/js';
+  import { mdiTimerSand, mdiDeleteOutline, mdiDeleteForeverOutline } from '@mdi/js';
+  import { type OnDelete, deleteAssets } from '$lib/utils/actions';
+  import DeleteAssetDialog from '../delete-asset-dialog.svelte';
+  import { t } from 'svelte-i18n';
 
-  export let onAssetDelete: OnAssetDelete;
-  export let menuItem = false;
-  export let force = !$featureFlags.trash;
+  interface Props {
+    onAssetDelete: OnDelete;
+    menuItem?: boolean;
+    force?: boolean;
+  }
+
+  let { onAssetDelete, menuItem = false, force = !$featureFlags.trash }: Props = $props();
 
   const { clearSelect, getOwnedAssets } = getAssetControlContext();
 
-  const dispatch = createEventDispatcher<{
-    escape: void;
-  }>();
+  let isShowConfirmation = $state(false);
+  let loading = $state(false);
 
-  let isShowConfirmation = false;
-  let loading = false;
+  let label = $derived(force ? $t('permanently_delete') : $t('delete'));
 
   const handleTrash = async () => {
     if (force) {
@@ -37,62 +34,26 @@
 
   const handleDelete = async () => {
     loading = true;
-
-    try {
-      const ids = Array.from(getOwnedAssets())
-        .filter((a) => !a.isExternal)
-        .map((a) => a.id);
-      await api.assetApi.deleteAssets({ assetBulkDeleteDto: { ids, force } });
-      for (const id of ids) {
-        onAssetDelete(id);
-      }
-
-      notificationController.show({
-        message: `${force ? 'Permanently deleted' : 'Trashed'} ${ids.length} assets`,
-        type: NotificationType.Info,
-      });
-
-      clearSelect();
-    } catch (e) {
-      handleError(e, 'Error deleting assets');
-    } finally {
-      isShowConfirmation = false;
-      loading = false;
-    }
-  };
-
-  const escape = () => {
-    dispatch('escape');
+    const ids = [...getOwnedAssets()].map((a) => a.id);
+    await deleteAssets(force, onAssetDelete, ids);
+    clearSelect();
     isShowConfirmation = false;
+    loading = false;
   };
 </script>
 
 {#if menuItem}
-  <MenuOption text={force ? 'Permanently Delete' : 'Delete'} on:click={handleTrash} />
+  <MenuOption text={label} icon={mdiDeleteOutline} onClick={handleTrash} />
 {:else if loading}
-  <CircleIconButton title="Loading" icon={mdiTimerSand} />
+  <CircleIconButton title={$t('loading')} icon={mdiTimerSand} onclick={() => {}} />
 {:else}
-  <CircleIconButton title="Delete" icon={mdiDeleteOutline} on:click={handleTrash} />
+  <CircleIconButton title={label} icon={mdiDeleteForeverOutline} onclick={handleTrash} />
 {/if}
 
 {#if isShowConfirmation}
-  <ConfirmDialogue
-    title="Permanently Delete Asset{getOwnedAssets().size > 1 ? 's' : ''}"
-    confirmText="Delete"
-    on:confirm={handleDelete}
-    on:cancel={() => (isShowConfirmation = false)}
-    on:escape={escape}
-  >
-    <svelte:fragment slot="prompt">
-      <p>
-        Are you sure you want to permanently delete
-        {#if getOwnedAssets().size > 1}
-          these <b>{getOwnedAssets().size}</b> assets? This will also remove them from their album(s).
-        {:else}
-          this asset? This will also remove it from its album(s).
-        {/if}
-      </p>
-      <p><b>You cannot undo this action!</b></p>
-    </svelte:fragment>
-  </ConfirmDialogue>
+  <DeleteAssetDialog
+    size={getOwnedAssets().size}
+    onConfirm={handleDelete}
+    onCancel={() => (isShowConfirmation = false)}
+  />
 {/if}

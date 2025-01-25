@@ -1,7 +1,7 @@
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
-// @dart=2.12
+// @dart=2.18
 
 // ignore_for_file: unused_element, unused_import
 // ignore_for_file: always_put_required_named_parameters_first
@@ -26,9 +26,9 @@ class AssetIdsResponseDto {
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is AssetIdsResponseDto &&
-     other.assetId == assetId &&
-     other.error == error &&
-     other.success == success;
+    other.assetId == assetId &&
+    other.error == error &&
+    other.success == success;
 
   @override
   int get hashCode =>
@@ -56,6 +56,7 @@ class AssetIdsResponseDto {
   /// [value] if it's a [Map], null otherwise.
   // ignore: prefer_constructors_over_static_methods
   static AssetIdsResponseDto? fromJson(dynamic value) {
+    upgradeDto(value, "AssetIdsResponseDto");
     if (value is Map) {
       final json = value.cast<String, dynamic>();
 
@@ -141,7 +142,7 @@ class AssetIdsResponseDtoErrorEnum {
 
   static AssetIdsResponseDtoErrorEnum? fromJson(dynamic value) => AssetIdsResponseDtoErrorEnumTypeTransformer().decode(value);
 
-  static List<AssetIdsResponseDtoErrorEnum>? listFromJson(dynamic json, {bool growable = false,}) {
+  static List<AssetIdsResponseDtoErrorEnum> listFromJson(dynamic json, {bool growable = false,}) {
     final result = <AssetIdsResponseDtoErrorEnum>[];
     if (json is List && json.isNotEmpty) {
       for (final row in json) {

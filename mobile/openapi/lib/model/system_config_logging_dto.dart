@@ -1,7 +1,7 @@
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
-// @dart=2.12
+// @dart=2.18
 
 // ignore_for_file: unused_element, unused_import
 // ignore_for_file: always_put_required_named_parameters_first
@@ -23,8 +23,8 @@ class SystemConfigLoggingDto {
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is SystemConfigLoggingDto &&
-     other.enabled == enabled &&
-     other.level == level;
+    other.enabled == enabled &&
+    other.level == level;
 
   @override
   int get hashCode =>
@@ -46,6 +46,7 @@ class SystemConfigLoggingDto {
   /// [value] if it's a [Map], null otherwise.
   // ignore: prefer_constructors_over_static_methods
   static SystemConfigLoggingDto? fromJson(dynamic value) {
+    upgradeDto(value, "SystemConfigLoggingDto");
     if (value is Map) {
       final json = value.cast<String, dynamic>();
 

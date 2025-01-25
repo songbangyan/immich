@@ -1,100 +1,45 @@
 <script lang="ts">
-  import {
-    notificationController,
-    NotificationType,
-  } from '$lib/components/shared-components/notification/notification';
-  import { handleError } from '$lib/utils/handle-error';
-  import { api, SystemConfigNewVersionCheckDto } from '@api';
+  import type { SystemConfigDto } from '@immich/sdk';
   import { isEqual } from 'lodash-es';
   import { fade } from 'svelte/transition';
-  import SettingButtonsRow from '../setting-buttons-row.svelte';
-  import SettingSwitch from '../setting-switch.svelte';
-  import type { ResetOptions } from '$lib/utils/dipatch';
+  import type { SettingsResetEvent, SettingsSaveEvent } from '../admin-settings';
+  import SettingButtonsRow from '$lib/components/shared-components/settings/setting-buttons-row.svelte';
+  import SettingSwitch from '$lib/components/shared-components/settings/setting-switch.svelte';
+  import { t } from 'svelte-i18n';
 
-  export let newVersionCheckConfig: SystemConfigNewVersionCheckDto; // this is the config that is being edited
-
-  let savedConfig: SystemConfigNewVersionCheckDto;
-  let defaultConfig: SystemConfigNewVersionCheckDto;
-
-  async function getConfigs() {
-    [savedConfig, defaultConfig] = await Promise.all([
-      api.systemConfigApi.getConfig().then((res) => res.data.newVersionCheck),
-      api.systemConfigApi.getConfigDefaults().then((res) => res.data.newVersionCheck),
-    ]);
+  interface Props {
+    savedConfig: SystemConfigDto;
+    defaultConfig: SystemConfigDto;
+    config: SystemConfigDto;
+    disabled?: boolean;
+    onReset: SettingsResetEvent;
+    onSave: SettingsSaveEvent;
   }
 
-  const handleReset = (detail: ResetOptions) => {
-    if (detail.default) {
-      resetToDefault();
-    } else {
-      reset();
-    }
+  let { savedConfig, defaultConfig, config = $bindable(), disabled = false, onReset, onSave }: Props = $props();
+
+  const onsubmit = (event: Event) => {
+    event.preventDefault();
   };
-
-  async function saveSetting() {
-    try {
-      const { data: configs } = await api.systemConfigApi.getConfig();
-
-      const result = await api.systemConfigApi.updateConfig({
-        systemConfigDto: {
-          ...configs,
-          newVersionCheck: newVersionCheckConfig,
-        },
-      });
-
-      newVersionCheckConfig = { ...result.data.newVersionCheck };
-      savedConfig = { ...result.data.newVersionCheck };
-
-      notificationController.show({ message: 'Settings saved', type: NotificationType.Info });
-    } catch (error) {
-      handleError(error, 'Unable to save settings');
-    }
-  }
-
-  async function reset() {
-    const { data: resetConfig } = await api.systemConfigApi.getConfig();
-
-    newVersionCheckConfig = { ...resetConfig.newVersionCheck };
-    savedConfig = { ...resetConfig.newVersionCheck };
-
-    notificationController.show({
-      message: 'Reset settings to the recent saved settings',
-      type: NotificationType.Info,
-    });
-  }
-
-  async function resetToDefault() {
-    const { data: configs } = await api.systemConfigApi.getConfigDefaults();
-
-    newVersionCheckConfig = { ...configs.newVersionCheck };
-    defaultConfig = { ...configs.newVersionCheck };
-
-    notificationController.show({
-      message: 'Reset settings to default',
-      type: NotificationType.Info,
-    });
-  }
 </script>
 
 <div>
-  {#await getConfigs() then}
-    <div in:fade={{ duration: 500 }}>
-      <form autocomplete="off" on:submit|preventDefault>
-        <div class="ml-4 mt-4 flex flex-col gap-4">
-          <div class="ml-4">
-            <SettingSwitch
-              title="ENABLED"
-              subtitle="Enable period requests to GitHub to check for new releases"
-              bind:checked={newVersionCheckConfig.enabled}
-            />
-            <SettingButtonsRow
-              on:reset={({ detail }) => handleReset(detail)}
-              on:save={saveSetting}
-              showResetToDefault={!isEqual(savedConfig, defaultConfig)}
-            />
-          </div>
-        </div>
-      </form>
-    </div>
-  {/await}
+  <div in:fade={{ duration: 500 }}>
+    <form autocomplete="off" {onsubmit}>
+      <div class="ml-4 mt-4">
+        <SettingSwitch
+          title={$t('admin.version_check_enabled_description')}
+          subtitle={$t('admin.version_check_implications')}
+          bind:checked={config.newVersionCheck.enabled}
+          {disabled}
+        />
+        <SettingButtonsRow
+          onReset={(options) => onReset({ ...options, configKeys: ['newVersionCheck'] })}
+          onSave={() => onSave({ newVersionCheck: config.newVersionCheck })}
+          showResetToDefault={!isEqual(savedConfig.newVersionCheck, defaultConfig.newVersionCheck)}
+          {disabled}
+        />
+      </div>
+    </form>
+  </div>
 </div>

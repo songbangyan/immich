@@ -1,7 +1,7 @@
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
-// @dart=2.12
+// @dart=2.18
 
 // ignore_for_file: unused_element, unused_import
 // ignore_for_file: always_put_required_named_parameters_first
@@ -75,13 +75,13 @@ class SharedLinkEditDto {
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is SharedLinkEditDto &&
-     other.allowDownload == allowDownload &&
-     other.allowUpload == allowUpload &&
-     other.changeExpiryTime == changeExpiryTime &&
-     other.description == description &&
-     other.expiresAt == expiresAt &&
-     other.password == password &&
-     other.showMetadata == showMetadata;
+    other.allowDownload == allowDownload &&
+    other.allowUpload == allowUpload &&
+    other.changeExpiryTime == changeExpiryTime &&
+    other.description == description &&
+    other.expiresAt == expiresAt &&
+    other.password == password &&
+    other.showMetadata == showMetadata;
 
   @override
   int get hashCode =>
@@ -141,6 +141,7 @@ class SharedLinkEditDto {
   /// [value] if it's a [Map], null otherwise.
   // ignore: prefer_constructors_over_static_methods
   static SharedLinkEditDto? fromJson(dynamic value) {
+    upgradeDto(value, "SharedLinkEditDto");
     if (value is Map) {
       final json = value.cast<String, dynamic>();
 
@@ -149,7 +150,7 @@ class SharedLinkEditDto {
         allowUpload: mapValueOfType<bool>(json, r'allowUpload'),
         changeExpiryTime: mapValueOfType<bool>(json, r'changeExpiryTime'),
         description: mapValueOfType<String>(json, r'description'),
-        expiresAt: mapDateTime(json, r'expiresAt', ''),
+        expiresAt: mapDateTime(json, r'expiresAt', r''),
         password: mapValueOfType<String>(json, r'password'),
         showMetadata: mapValueOfType<bool>(json, r'showMetadata'),
       );

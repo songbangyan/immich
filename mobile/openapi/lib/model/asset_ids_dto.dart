@@ -1,7 +1,7 @@
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
-// @dart=2.12
+// @dart=2.18
 
 // ignore_for_file: unused_element, unused_import
 // ignore_for_file: always_put_required_named_parameters_first
@@ -20,7 +20,7 @@ class AssetIdsDto {
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is AssetIdsDto &&
-     other.assetIds == assetIds;
+    _deepEquality.equals(other.assetIds, assetIds);
 
   @override
   int get hashCode =>
@@ -40,12 +40,13 @@ class AssetIdsDto {
   /// [value] if it's a [Map], null otherwise.
   // ignore: prefer_constructors_over_static_methods
   static AssetIdsDto? fromJson(dynamic value) {
+    upgradeDto(value, "AssetIdsDto");
     if (value is Map) {
       final json = value.cast<String, dynamic>();
 
       return AssetIdsDto(
-        assetIds: json[r'assetIds'] is List
-            ? (json[r'assetIds'] as List).cast<String>()
+        assetIds: json[r'assetIds'] is Iterable
+            ? (json[r'assetIds'] as Iterable).cast<String>().toList(growable: false)
             : const [],
       );
     }

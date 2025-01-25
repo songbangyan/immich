@@ -1,7 +1,7 @@
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
-// @dart=2.12
+// @dart=2.18
 
 // ignore_for_file: unused_element, unused_import
 // ignore_for_file: always_put_required_named_parameters_first
@@ -38,11 +38,11 @@ class FileReportItemDto {
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is FileReportItemDto &&
-     other.checksum == checksum &&
-     other.entityId == entityId &&
-     other.entityType == entityType &&
-     other.pathType == pathType &&
-     other.pathValue == pathValue;
+    other.checksum == checksum &&
+    other.entityId == entityId &&
+    other.entityType == entityType &&
+    other.pathType == pathType &&
+    other.pathValue == pathValue;
 
   @override
   int get hashCode =>
@@ -74,6 +74,7 @@ class FileReportItemDto {
   /// [value] if it's a [Map], null otherwise.
   // ignore: prefer_constructors_over_static_methods
   static FileReportItemDto? fromJson(dynamic value) {
+    upgradeDto(value, "FileReportItemDto");
     if (value is Map) {
       final json = value.cast<String, dynamic>();
 

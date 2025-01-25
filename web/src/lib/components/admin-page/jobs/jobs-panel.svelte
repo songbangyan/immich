@@ -4,166 +4,186 @@
     NotificationType,
   } from '$lib/components/shared-components/notification/notification';
   import { featureFlags } from '$lib/stores/server-config.store';
+  import { getJobName } from '$lib/utils';
   import { handleError } from '$lib/utils/handle-error';
-  import { AllJobStatusResponseDto, api, JobCommand, JobCommandDto, JobName } from '@api';
-  import type { ComponentType } from 'svelte';
+  import { JobCommand, JobName, sendJobCommand, type AllJobStatusResponseDto, type JobCommandDto } from '@immich/sdk';
   import {
+    mdiContentDuplicate,
     mdiFaceRecognition,
     mdiFileJpgBox,
     mdiFileXmlBox,
     mdiFolderMove,
+    mdiImageSearch,
     mdiLibraryShelves,
     mdiTable,
-    mdiTagMultiple,
-    mdiVectorCircle,
+    mdiTagFaces,
     mdiVideo,
   } from '@mdi/js';
-  import ConfirmDialogue from '../../shared-components/confirm-dialogue.svelte';
+  import type { Component } from 'svelte';
   import JobTile from './job-tile.svelte';
   import StorageMigrationDescription from './storage-migration-description.svelte';
+  import { dialogController } from '$lib/components/shared-components/dialog/dialog';
+  import { t } from 'svelte-i18n';
 
-  export let jobs: AllJobStatusResponseDto;
+  interface Props {
+    jobs: AllJobStatusResponseDto;
+  }
+
+  let { jobs = $bindable() }: Props = $props();
 
   interface JobDetails {
     title: string;
     subtitle?: string;
+    description?: Component;
     allText?: string;
-    missingText?: string;
+    refreshText?: string;
+    missingText: string;
     disabled?: boolean;
     icon: string;
-    allowForceCommand?: boolean;
-    component?: ComponentType;
     handleCommand?: (jobId: JobName, jobCommand: JobCommandDto) => Promise<void>;
   }
 
-  let faceConfirm = false;
-
-  const handleFaceCommand = async (jobId: JobName, dto: JobCommandDto) => {
+  const handleConfirmCommand = async (jobId: JobName, dto: JobCommandDto) => {
     if (dto.force) {
-      faceConfirm = true;
+      const isConfirmed = await dialogController.show({
+        prompt: $t('admin.confirm_reprocess_all_faces'),
+      });
+
+      if (isConfirmed) {
+        await handleCommand(jobId, { command: JobCommand.Start, force: true });
+        return;
+      }
+
       return;
     }
 
     await handleCommand(jobId, dto);
   };
 
-  const onFaceConfirm = () => {
-    faceConfirm = false;
-    handleCommand(JobName.RecognizeFaces, { command: JobCommand.Start, force: true });
-  };
-
-  $: jobDetails = <Partial<Record<JobName, JobDetails>>>{
+  let jobDetails: Partial<Record<JobName, JobDetails>> = {
     [JobName.ThumbnailGeneration]: {
       icon: mdiFileJpgBox,
-      title: api.getJobName(JobName.ThumbnailGeneration),
-      subtitle: 'Regenerate JPEG and WebP thumbnails',
+      title: $getJobName(JobName.ThumbnailGeneration),
+      subtitle: $t('admin.thumbnail_generation_job_description'),
+      allText: $t('all'),
+      missingText: $t('missing'),
     },
     [JobName.MetadataExtraction]: {
       icon: mdiTable,
-      title: api.getJobName(JobName.MetadataExtraction),
-      subtitle: 'Extract metadata information i.e. GPS, resolution...etc',
+      title: $getJobName(JobName.MetadataExtraction),
+      subtitle: $t('admin.metadata_extraction_job_description'),
+      allText: $t('all'),
+      missingText: $t('missing'),
     },
     [JobName.Library]: {
       icon: mdiLibraryShelves,
-      title: api.getJobName(JobName.Library),
-      subtitle: 'Perform library tasks',
-      allText: 'ALL',
-      missingText: 'REFRESH',
+      title: $getJobName(JobName.Library),
+      subtitle: $t('admin.library_tasks_description'),
+      allText: $t('all'),
+      missingText: $t('refresh'),
     },
     [JobName.Sidecar]: {
-      title: api.getJobName(JobName.Sidecar),
+      title: $getJobName(JobName.Sidecar),
       icon: mdiFileXmlBox,
-      subtitle: 'Discover or synchronize sidecar metadata from the filesystem',
-      allText: 'SYNC',
-      missingText: 'DISCOVER',
+      subtitle: $t('admin.sidecar_job_description'),
+      allText: $t('sync'),
+      missingText: $t('discover'),
       disabled: !$featureFlags.sidecar,
     },
-    [JobName.ObjectTagging]: {
-      icon: mdiTagMultiple,
-      title: api.getJobName(JobName.ObjectTagging),
-      subtitle: 'Run machine learning to tag objects\nNote that some assets may not have any objects detected',
-      disabled: !$featureFlags.tagImage,
+    [JobName.SmartSearch]: {
+      icon: mdiImageSearch,
+      title: $getJobName(JobName.SmartSearch),
+      subtitle: $t('admin.smart_search_job_description'),
+      allText: $t('all'),
+      missingText: $t('missing'),
+      disabled: !$featureFlags.smartSearch,
     },
-    [JobName.ClipEncoding]: {
-      icon: mdiVectorCircle,
-      title: api.getJobName(JobName.ClipEncoding),
-      subtitle: 'Run machine learning to generate clip embeddings',
-      disabled: !$featureFlags.clipEncode,
+    [JobName.DuplicateDetection]: {
+      icon: mdiContentDuplicate,
+      title: $getJobName(JobName.DuplicateDetection),
+      subtitle: $t('admin.duplicate_detection_job_description'),
+      allText: $t('all'),
+      missingText: $t('missing'),
+      disabled: !$featureFlags.duplicateDetection,
     },
-    [JobName.RecognizeFaces]: {
+    [JobName.FaceDetection]: {
       icon: mdiFaceRecognition,
-      title: api.getJobName(JobName.RecognizeFaces),
-      subtitle: 'Run machine learning to recognize faces',
-      handleCommand: handleFaceCommand,
+      title: $getJobName(JobName.FaceDetection),
+      subtitle: $t('admin.face_detection_description'),
+      allText: $t('reset'),
+      refreshText: $t('refresh'),
+      missingText: $t('missing'),
+      handleCommand: handleConfirmCommand,
+      disabled: !$featureFlags.facialRecognition,
+    },
+    [JobName.FacialRecognition]: {
+      icon: mdiTagFaces,
+      title: $getJobName(JobName.FacialRecognition),
+      subtitle: $t('admin.facial_recognition_job_description'),
+      allText: $t('reset'),
+      missingText: $t('missing'),
+      handleCommand: handleConfirmCommand,
       disabled: !$featureFlags.facialRecognition,
     },
     [JobName.VideoConversion]: {
       icon: mdiVideo,
-      title: api.getJobName(JobName.VideoConversion),
-      subtitle: 'Transcode videos not in the desired format',
+      title: $getJobName(JobName.VideoConversion),
+      subtitle: $t('admin.video_conversion_job_description'),
+      allText: $t('all'),
+      missingText: $t('missing'),
     },
     [JobName.StorageTemplateMigration]: {
       icon: mdiFolderMove,
-      title: api.getJobName(JobName.StorageTemplateMigration),
-      allowForceCommand: false,
-      component: StorageMigrationDescription,
+      title: $getJobName(JobName.StorageTemplateMigration),
+      missingText: $t('missing'),
+      description: StorageMigrationDescription,
     },
     [JobName.Migration]: {
       icon: mdiFolderMove,
-      title: api.getJobName(JobName.Migration),
-      subtitle: 'Migrate thumbnails for assets and faces to the latest folder structure',
-      allowForceCommand: false,
+      title: $getJobName(JobName.Migration),
+      subtitle: $t('admin.migration_job_description'),
+      missingText: $t('missing'),
     },
   };
-  $: jobList = Object.entries(jobDetails) as [JobName, JobDetails][];
+
+  let jobList = Object.entries(jobDetails) as [JobName, JobDetails][];
 
   async function handleCommand(jobId: JobName, jobCommand: JobCommandDto) {
     const title = jobDetails[jobId]?.title;
 
     try {
-      const { data } = await api.jobApi.sendJobCommand({ id: jobId, jobCommandDto: jobCommand });
-      jobs[jobId] = data;
+      jobs[jobId] = await sendJobCommand({ id: jobId, jobCommandDto: jobCommand });
 
       switch (jobCommand.command) {
-        case JobCommand.Empty:
+        case JobCommand.Empty: {
           notificationController.show({
-            message: `Cleared jobs for: ${title}`,
+            message: $t('admin.cleared_jobs', { values: { job: title } }),
             type: NotificationType.Info,
           });
           break;
+        }
       }
     } catch (error) {
-      handleError(error, `Command '${jobCommand.command}' failed for job: ${title}`);
+      handleError(error, $t('admin.failed_job_command', { values: { command: jobCommand.command, job: title } }));
     }
   }
 </script>
 
-{#if faceConfirm}
-  <ConfirmDialogue
-    prompt="Are you sure you want to reprocess all faces? This will also clear named people."
-    on:confirm={onFaceConfirm}
-    on:cancel={() => (faceConfirm = false)}
-  />
-{/if}
-
 <div class="flex flex-col gap-7">
-  {#each jobList as [jobName, { title, subtitle, disabled, allText, missingText, allowForceCommand, icon, component, handleCommand: handleCommandOverride }]}
+  {#each jobList as [jobName, { title, subtitle, description, disabled, allText, refreshText, missingText, icon, handleCommand: handleCommandOverride }]}
     {@const { jobCounts, queueStatus } = jobs[jobName]}
     <JobTile
       {icon}
       {title}
       {disabled}
       {subtitle}
-      allText={allText || 'ALL'}
-      missingText={missingText || 'MISSING'}
-      {allowForceCommand}
+      {description}
+      allText={allText?.toUpperCase()}
+      refreshText={refreshText?.toUpperCase()}
+      missingText={missingText.toUpperCase()}
       {jobCounts}
       {queueStatus}
-      on:command={({ detail }) => (handleCommandOverride || handleCommand)(jobName, detail)}
-    >
-      {#if component}
-        <svelte:component this={component} slot="description" />
-      {/if}
-    </JobTile>
+      onCommand={(command) => (handleCommandOverride || handleCommand)(jobName, command)}
+    />
   {/each}
 </div>

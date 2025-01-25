@@ -1,153 +1,124 @@
 <script lang="ts">
-  import {
-    notificationController,
-    NotificationType,
-  } from '$lib/components/shared-components/notification/notification';
-  import { api, SystemConfigLibraryDto } from '@api';
-  import SettingButtonsRow from '../setting-buttons-row.svelte';
-  import SettingInputField, { SettingInputFieldType } from '../setting-input-field.svelte';
-  import SettingSwitch from '../setting-switch.svelte';
+  import type { SystemConfigDto } from '@immich/sdk';
   import { isEqual } from 'lodash-es';
   import { fade } from 'svelte/transition';
-  import { handleError } from '../../../../utils/handle-error';
-  import SettingAccordion from '../setting-accordion.svelte';
-  import type { ResetOptions } from '$lib/utils/dipatch';
+  import type { SettingsResetEvent, SettingsSaveEvent } from '../admin-settings';
+  import SettingAccordion from '$lib/components/shared-components/settings/setting-accordion.svelte';
+  import SettingInputField from '$lib/components/shared-components/settings/setting-input-field.svelte';
+  import SettingSwitch from '$lib/components/shared-components/settings/setting-switch.svelte';
+  import SettingButtonsRow from '$lib/components/shared-components/settings/setting-buttons-row.svelte';
+  import { t } from 'svelte-i18n';
+  import FormatMessage from '$lib/components/i18n/format-message.svelte';
+  import SettingSelect from '$lib/components/shared-components/settings/setting-select.svelte';
+  import { SettingInputFieldType } from '$lib/constants';
 
-  export let libraryConfig: SystemConfigLibraryDto; // this is the config that is being edited
-  export let disabled = false;
+  interface Props {
+    savedConfig: SystemConfigDto;
+    defaultConfig: SystemConfigDto;
+    config: SystemConfigDto;
+    disabled?: boolean;
+    onReset: SettingsResetEvent;
+    onSave: SettingsSaveEvent;
+    openByDefault?: boolean;
+  }
 
-  const cronExpressionOptions = [
-    { title: 'Every night at midnight', expression: '0 0 * * *' },
-    { title: 'Every night at 2am', expression: '0 2 * * *' },
-    { title: 'Every day at 1pm', expression: '0 13 * * *' },
-    { title: 'Every 6 hours', expression: '0 */6 * * *' },
-  ];
+  let {
+    savedConfig,
+    defaultConfig,
+    config = $bindable(),
+    disabled = false,
+    onReset,
+    onSave,
+    openByDefault = false,
+  }: Props = $props();
 
-  let savedConfig: SystemConfigLibraryDto;
-  let defaultConfig: SystemConfigLibraryDto;
+  let cronExpressionOptions = $derived([
+    { text: $t('interval.night_at_midnight'), value: '0 0 * * *' },
+    { text: $t('interval.night_at_twoam'), value: '0 2 * * *' },
+    { text: $t('interval.day_at_onepm'), value: '0 13 * * *' },
+    { text: $t('interval.hours', { values: { hours: 6 } }), value: '0 */6 * * *' },
+  ]);
 
-  const handleReset = (detail: ResetOptions) => {
-    if (detail.default) {
-      resetToDefault();
-    } else {
-      reset();
-    }
+  const onsubmit = (event: Event) => {
+    event.preventDefault();
   };
-
-  async function getConfigs() {
-    [savedConfig, defaultConfig] = await Promise.all([
-      api.systemConfigApi.getConfig().then((res) => res.data.library),
-      api.systemConfigApi.getConfigDefaults().then((res) => res.data.library),
-    ]);
-  }
-
-  async function saveSetting() {
-    try {
-      const { data: configs } = await api.systemConfigApi.getConfig();
-
-      const result = await api.systemConfigApi.updateConfig({
-        systemConfigDto: {
-          ...configs,
-          library: libraryConfig,
-        },
-      });
-
-      libraryConfig = { ...result.data.library };
-      savedConfig = { ...result.data.library };
-
-      notificationController.show({
-        message: 'Library settings saved',
-        type: NotificationType.Info,
-      });
-    } catch (e) {
-      handleError(e, 'Unable to save settings');
-    }
-  }
-
-  async function reset() {
-    const { data: resetConfig } = await api.systemConfigApi.getConfig();
-
-    libraryConfig = { ...resetConfig.library };
-    savedConfig = { ...resetConfig.library };
-
-    notificationController.show({
-      message: 'Reset library settings to the recent saved settings',
-      type: NotificationType.Info,
-    });
-  }
-
-  async function resetToDefault() {
-    const { data: configs } = await api.systemConfigApi.getConfigDefaults();
-
-    libraryConfig = { ...configs.library };
-    defaultConfig = { ...configs.library };
-
-    notificationController.show({
-      message: 'Reset library settings to default',
-      type: NotificationType.Info,
-    });
-  }
 </script>
 
 <div>
-  {#await getConfigs() then}
-    <div in:fade={{ duration: 500 }}>
-      <SettingAccordion title="Scanning" subtitle="Settings for library scanning" isOpen>
-        <form autocomplete="off" on:submit|preventDefault>
+  <div in:fade={{ duration: 500 }}>
+    <form autocomplete="off" {onsubmit}>
+      <div class="ml-4 mt-4 flex flex-col gap-4">
+        <SettingAccordion
+          key="library-watching"
+          title={$t('admin.library_watching_settings')}
+          subtitle={$t('admin.library_watching_settings_description')}
+          isOpen={openByDefault}
+        >
           <div class="ml-4 mt-4 flex flex-col gap-4">
             <SettingSwitch
-              title="ENABLED"
+              title={$t('admin.library_watching_enable_description')}
               {disabled}
-              subtitle="Enable automatic library scanning"
-              bind:checked={libraryConfig.scan.enabled}
+              bind:checked={config.library.watch.enabled}
+            />
+          </div>
+        </SettingAccordion>
+
+        <SettingAccordion
+          key="library-scanning"
+          title={$t('admin.library_scanning')}
+          subtitle={$t('admin.library_scanning_description')}
+          isOpen={openByDefault}
+        >
+          <div class="ml-4 mt-4 flex flex-col gap-4">
+            <SettingSwitch
+              title={$t('admin.library_scanning_enable_description')}
+              {disabled}
+              bind:checked={config.library.scan.enabled}
             />
 
-            <div class="flex flex-col my-2 dark:text-immich-dark-fg">
-              <label class="text-sm" for="expression-select">Cron Expression Presets</label>
-              <select
-                class="p-2 mt-2 text-sm rounded-lg bg-slate-200 hover:cursor-pointer dark:bg-gray-600"
-                disabled={disabled || !libraryConfig.scan.enabled}
-                name="expression"
-                id="expression-select"
-                bind:value={libraryConfig.scan.cronExpression}
-              >
-                {#each cronExpressionOptions as { title, expression }}
-                  <option value={expression}>{title}</option>
-                {/each}
-              </select>
-            </div>
+            <SettingSelect
+              options={cronExpressionOptions}
+              disabled={disabled || !config.library.scan.enabled}
+              name="expression"
+              label={$t('admin.cron_expression_presets')}
+              bind:value={config.library.scan.cronExpression}
+            />
 
             <SettingInputField
               inputType={SettingInputFieldType.TEXT}
               required={true}
-              disabled={disabled || !libraryConfig.scan.enabled}
-              label="Cron Expression"
-              bind:value={libraryConfig.scan.cronExpression}
-              isEdited={libraryConfig.scan.cronExpression !== savedConfig.scan.cronExpression}
+              disabled={disabled || !config.library.scan.enabled}
+              label={$t('admin.cron_expression')}
+              bind:value={config.library.scan.cronExpression}
+              isEdited={config.library.scan.cronExpression !== savedConfig.library.scan.cronExpression}
             >
-              <svelte:fragment slot="desc">
+              {#snippet descriptionSnippet()}
                 <p class="text-sm dark:text-immich-dark-fg">
-                  Set the scanning interval using the cron format. For more information please refer to e.g. <a
-                    href="https://crontab.guru"
-                    class="underline"
-                    target="_blank"
-                    rel="noreferrer">Crontab Guru</a
-                  >
+                  <FormatMessage key="admin.cron_expression_description">
+                    {#snippet children({ message })}
+                      <a
+                        href="https://crontab.guru/#{config.library.scan.cronExpression.replaceAll(' ', '_')}"
+                        class="underline"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {message}
+                      </a>
+                    {/snippet}
+                  </FormatMessage>
                 </p>
-              </svelte:fragment>
+              {/snippet}
             </SettingInputField>
           </div>
+        </SettingAccordion>
 
-          <div class="ml-4">
-            <SettingButtonsRow
-              on:reset={({ detail }) => handleReset(detail)}
-              on:save={saveSetting}
-              showResetToDefault={!isEqual(savedConfig, defaultConfig)}
-              {disabled}
-            />
-          </div>
-        </form>
-      </SettingAccordion>
-    </div>
-  {/await}
+        <SettingButtonsRow
+          onReset={(options) => onReset({ ...options, configKeys: ['library'] })}
+          onSave={() => onSave({ library: config.library })}
+          showResetToDefault={!isEqual(savedConfig.library, defaultConfig.library)}
+          {disabled}
+        />
+      </div>
+    </form>
+  </div>
 </div>

@@ -2,7 +2,8 @@
 sidebar_position: 1
 ---
 
-import AppArchitecture from './img/app-architecture.png';
+import AppArchitecture from './img/app-architecture.webp';
+import MobileArchitecture from './img/immich_mobile_architecture.svg';
 
 # Architecture
 
@@ -28,7 +29,14 @@ All three clients use [OpenAPI](./open-api.md) to auto-generate rest clients for
 
 ### Mobile App
 
-The mobile app is written in [Flutter](https://flutter.dev/). It uses [Isar Database](https://isar.dev/) for a local database and [Riverpod](https://riverpod.dev/) for state management.
+The mobile app is written in [Dart](https://dart.dev/) using [Flutter](https://flutter.dev/). Below is an architecture overview:
+
+<MobileArchitecture className="p-4 dark:bg-immich-dark-primary my-4" />
+
+The diagrams shows the target architecture, the current state of the code-base is not always following the architecture yet. New code and contributions should follow this architecture.
+Currently, it uses [Isar Database](https://isar.dev/) for a local database and [Riverpod](https://riverpod.dev/) for state management (providers).
+Entities and Models are the two types of data classes used. While entities are stored in the on-device database, models are ephemeral and only kept in memory.
+The Repositories should be the only place where other data classes are used internally (such as OpenAPI DTOs). However, their interfaces must not use foreign data classes!
 
 ### Web Client
 
@@ -73,14 +81,14 @@ The Immich Microservices image uses the same `Dockerfile` as the Immich Server, 
 - Thumbnail Generation
 - Metadata Extraction
 - Video Transcoding
-- Object Tagging
+- Smart Search
 - Facial Recognition
 - Storage Template Migration
 - Sidecar (see [XMP Sidecars](/docs/features/xmp-sidecars.md))
 - Background jobs (file deletion, user deletion)
 
 :::info
-This list closely matches what is available on the [Administration > Jobs](/docs/administration/jobs.md) page, which provides some remote queue management capabilities.
+This list closely matches what is available on the [Administration > Jobs](/docs/administration/jobs-workers/#jobs) page, which provides some remote queue management capabilities.
 :::
 
 ### Machine Learning
@@ -107,4 +115,4 @@ See [Database Migrations](./database-migrations.md) for more information about h
 
 ### Redis
 
-Immich uses [Redis](https://redis.com/) via [BullMQ](https://docs.bullmq.io/) to manage job queues. Some jobs trigger subsequent jobs. For example, object detection relies on thumbnail generation and automatically run after one is generated.
+Immich uses [Redis](https://redis.com/) via [BullMQ](https://docs.bullmq.io/) to manage job queues. Some jobs trigger subsequent jobs. For example, Smart Search and Facial Recognition relies on thumbnail generation and automatically run after one is generated.

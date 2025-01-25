@@ -1,45 +1,48 @@
 <script lang="ts">
+  import { goto, afterNavigate } from '$app/navigation';
   import ControlAppBar from '$lib/components/shared-components/control-app-bar.svelte';
-  import { api, copyToClipboard, SharedLinkResponseDto } from '@api';
-  import { goto } from '$app/navigation';
-  import SharedLinkCard from '$lib/components/sharedlinks-page/shared-link-card.svelte';
+  import CreateSharedLinkModal from '$lib/components/shared-components/create-share-link-modal/create-shared-link-modal.svelte';
   import {
     notificationController,
     NotificationType,
   } from '$lib/components/shared-components/notification/notification';
-  import { onMount } from 'svelte';
-  import CreateSharedLinkModal from '$lib/components/shared-components/create-share-link-modal/create-shared-link-modal.svelte';
-  import ConfirmDialogue from '$lib/components/shared-components/confirm-dialogue.svelte';
-  import { handleError } from '$lib/utils/handle-error';
+  import SharedLinkCard from '$lib/components/sharedlinks-page/shared-link-card.svelte';
   import { AppRoute } from '$lib/constants';
+  import { handleError } from '$lib/utils/handle-error';
+  import { getAllSharedLinks, removeSharedLink, type SharedLinkResponseDto } from '@immich/sdk';
   import { mdiArrowLeft } from '@mdi/js';
+  import { onMount } from 'svelte';
+  import { dialogController } from '$lib/components/shared-components/dialog/dialog';
+  import { t } from 'svelte-i18n';
 
-  let sharedLinks: SharedLinkResponseDto[] = [];
-  let editSharedLink: SharedLinkResponseDto | null = null;
-
-  let deleteLinkId: string | null = null;
+  let sharedLinks: SharedLinkResponseDto[] = $state([]);
+  let editSharedLink: SharedLinkResponseDto | null = $state(null);
 
   const refresh = async () => {
-    const { data } = await api.sharedLinkApi.getAllSharedLinks();
-    sharedLinks = data;
+    sharedLinks = await getAllSharedLinks();
   };
 
   onMount(async () => {
     await refresh();
   });
 
-  const handleDeleteLink = async () => {
-    if (!deleteLinkId) {
+  const handleDeleteLink = async (id: string) => {
+    const isConfirmed = await dialogController.show({
+      title: $t('delete_shared_link'),
+      prompt: $t('confirm_delete_shared_link'),
+      confirmText: $t('delete'),
+    });
+
+    if (!isConfirmed) {
       return;
     }
 
     try {
-      await api.sharedLinkApi.removeSharedLink({ id: deleteLinkId });
-      notificationController.show({ message: 'Deleted shared link', type: NotificationType.Info });
-      deleteLinkId = null;
+      await removeSharedLink({ id });
+      notificationController.show({ message: $t('deleted_shared_link'), type: NotificationType.Info });
       await refresh();
     } catch (error) {
-      await handleError(error, 'Unable to delete shared link');
+      handleError(error, $t('errors.unable_to_delete_shared_link'));
     }
   };
 
@@ -48,47 +51,39 @@
     editSharedLink = null;
   };
 
-  const handleCopyLink = async (key: string) => {
-    await copyToClipboard(`${window.location.origin}/share/${key}`);
-  };
+  let backUrl: string = AppRoute.SHARING;
+
+  afterNavigate(({ from }) => {
+    let url: string | undefined = from?.url?.pathname;
+    backUrl = url || AppRoute.SHARING;
+  });
 </script>
 
-<ControlAppBar backIcon={mdiArrowLeft} on:close={() => goto(AppRoute.SHARING)}>
-  <svelte:fragment slot="leading">Shared links</svelte:fragment>
+<ControlAppBar backIcon={mdiArrowLeft} onClose={() => goto(backUrl)}>
+  {#snippet leading()}
+    {$t('shared_links')}
+  {/snippet}
 </ControlAppBar>
 
-<section class="mt-[120px] flex flex-col pb-[120px]">
-  <div class="m-auto mb-4 w-[50%] dark:text-immich-gray">
-    <p>Manage shared links</p>
+<section class="mt-[120px] flex flex-col pb-[120px] container max-w-screen-lg mx-auto px-3">
+  <div class="mb-4 dark:text-immich-gray">
+    <p>{$t('manage_shared_links')}</p>
   </div>
   {#if sharedLinks.length === 0}
-    <div class="m-auto flex w-[50%] place-content-center place-items-center rounded-lg bg-gray-100 p-12">
-      <p>You don't have any shared links</p>
+    <div
+      class="flex place-content-center place-items-center rounded-lg bg-gray-100 dark:bg-immich-dark-gray dark:text-immich-gray p-12"
+    >
+      <p>{$t('you_dont_have_any_shared_links')}</p>
     </div>
   {:else}
-    <div class="m-auto flex w-[50%] flex-col">
+    <div class="flex flex-col">
       {#each sharedLinks as link (link.id)}
-        <SharedLinkCard
-          {link}
-          on:delete={() => (deleteLinkId = link.id)}
-          on:edit={() => (editSharedLink = link)}
-          on:copy={() => handleCopyLink(link.key)}
-        />
+        <SharedLinkCard {link} onDelete={() => handleDeleteLink(link.id)} onEdit={() => (editSharedLink = link)} />
       {/each}
     </div>
   {/if}
 </section>
 
 {#if editSharedLink}
-  <CreateSharedLinkModal editingLink={editSharedLink} on:close={handleEditDone} />
-{/if}
-
-{#if deleteLinkId}
-  <ConfirmDialogue
-    title="Delete Shared Link"
-    prompt="Are you sure you want to delete this shared link?"
-    confirmText="Delete"
-    on:confirm={() => handleDeleteLink()}
-    on:cancel={() => (deleteLinkId = null)}
-  />
+  <CreateSharedLinkModal editingLink={editSharedLink} onClose={handleEditDone} />
 {/if}

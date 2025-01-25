@@ -1,106 +1,47 @@
 <script lang="ts">
-  import {
-    notificationController,
-    NotificationType,
-  } from '$lib/components/shared-components/notification/notification';
-  import { handleError } from '$lib/utils/handle-error';
-  import { api, SystemConfigThemeDto } from '@api';
+  import type { SystemConfigDto } from '@immich/sdk';
   import { isEqual } from 'lodash-es';
   import { fade } from 'svelte/transition';
-  import SettingButtonsRow from '../setting-buttons-row.svelte';
-  import SettingTextarea from '../setting-textarea.svelte';
-  import type { ResetOptions } from '$lib/utils/dipatch';
+  import type { SettingsResetEvent, SettingsSaveEvent } from '../admin-settings';
+  import SettingTextarea from '$lib/components/shared-components/settings/setting-textarea.svelte';
+  import SettingButtonsRow from '$lib/components/shared-components/settings/setting-buttons-row.svelte';
+  import { t } from 'svelte-i18n';
 
-  export let themeConfig: SystemConfigThemeDto; // this is the config that is being edited
-  export let disabled = false;
+  interface Props {
+    savedConfig: SystemConfigDto;
+    defaultConfig: SystemConfigDto;
+    config: SystemConfigDto;
+    disabled?: boolean;
+    onReset: SettingsResetEvent;
+    onSave: SettingsSaveEvent;
+  }
 
-  let savedConfig: SystemConfigThemeDto;
-  let defaultConfig: SystemConfigThemeDto;
+  let { savedConfig, defaultConfig, config = $bindable(), disabled = false, onReset, onSave }: Props = $props();
 
-  const handleReset = (detail: ResetOptions) => {
-    if (detail.default) {
-      resetToDefault();
-    } else {
-      reset();
-    }
+  const onsubmit = (event: Event) => {
+    event.preventDefault();
   };
-
-  async function getConfigs() {
-    [savedConfig, defaultConfig] = await Promise.all([
-      api.systemConfigApi.getConfig().then((res) => res.data.theme),
-      api.systemConfigApi.getConfigDefaults().then((res) => res.data.theme),
-    ]);
-  }
-
-  async function saveSetting() {
-    try {
-      const { data: current } = await api.systemConfigApi.getConfig();
-
-      const { data: updated } = await api.systemConfigApi.updateConfig({
-        systemConfigDto: {
-          ...current,
-          theme: themeConfig,
-        },
-      });
-
-      themeConfig = { ...updated.theme };
-      savedConfig = { ...updated.theme };
-
-      notificationController.show({ message: 'Theme saved', type: NotificationType.Info });
-    } catch (error) {
-      handleError(error, 'Unable to save settings');
-    }
-  }
-
-  async function reset() {
-    const { data: resetConfig } = await api.systemConfigApi.getConfig();
-
-    themeConfig = { ...resetConfig.theme };
-    savedConfig = { ...resetConfig.theme };
-
-    notificationController.show({
-      message: 'Reset theme to the recent saved theme',
-      type: NotificationType.Info,
-    });
-  }
-
-  async function resetToDefault() {
-    const { data: configs } = await api.systemConfigApi.getConfigDefaults();
-
-    themeConfig = { ...configs.theme };
-    defaultConfig = { ...configs.theme };
-
-    notificationController.show({
-      message: 'Reset theme to default',
-      type: NotificationType.Info,
-    });
-  }
 </script>
 
 <div>
-  {#await getConfigs() then}
-    <div in:fade={{ duration: 500 }}>
-      <form autocomplete="off" on:submit|preventDefault>
-        <div class="ml-4 mt-4 flex flex-col gap-4">
-          <div class="ml-4">
-            <SettingTextarea
-              {disabled}
-              label="Custom CSS"
-              desc="Cascading Style Sheets allow the design of Immich to be customized."
-              bind:value={themeConfig.customCss}
-              required={true}
-              isEdited={themeConfig.customCss !== savedConfig.customCss}
-            />
+  <div in:fade={{ duration: 500 }}>
+    <form autocomplete="off" {onsubmit}>
+      <div class="ml-4 mt-4 flex flex-col gap-4">
+        <SettingTextarea
+          {disabled}
+          label={$t('admin.theme_custom_css_settings')}
+          description={$t('admin.theme_custom_css_settings_description')}
+          bind:value={config.theme.customCss}
+          isEdited={config.theme.customCss !== savedConfig.theme.customCss}
+        />
 
-            <SettingButtonsRow
-              on:reset={({ detail }) => handleReset(detail)}
-              on:save={saveSetting}
-              showResetToDefault={!isEqual(savedConfig, defaultConfig)}
-              {disabled}
-            />
-          </div>
-        </div>
-      </form>
-    </div>
-  {/await}
+        <SettingButtonsRow
+          onReset={(options) => onReset({ ...options, configKeys: ['theme'] })}
+          onSave={() => onSave({ theme: config.theme })}
+          showResetToDefault={!isEqual(savedConfig, defaultConfig)}
+          {disabled}
+        />
+      </div>
+    </form>
+  </div>
 </div>

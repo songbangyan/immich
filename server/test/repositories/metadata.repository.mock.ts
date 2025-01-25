@@ -1,11 +1,11 @@
-import { IMetadataRepository } from '@app/domain';
+import { IMetadataRepository } from 'src/types';
+import { Mocked, vitest } from 'vitest';
 
-export const newMetadataRepositoryMock = (): jest.Mocked<IMetadataRepository> => {
+export const newMetadataRepositoryMock = (): Mocked<IMetadataRepository> => {
   return {
-    init: jest.fn(),
-    teardown: jest.fn(),
-    reverseGeocode: jest.fn(),
-    readTags: jest.fn(),
-    writeTags: jest.fn(),
+    teardown: vitest.fn(),
+    readTags: vitest.fn(),
+    writeTags: vitest.fn(),
+    extractBinaryTag: vitest.fn(),
   };
 };

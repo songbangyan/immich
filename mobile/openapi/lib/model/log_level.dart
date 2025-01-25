@@ -1,7 +1,7 @@
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
-// @dart=2.12
+// @dart=2.18
 
 // ignore_for_file: unused_element, unused_import
 // ignore_for_file: always_put_required_named_parameters_first
@@ -42,7 +42,7 @@ class LogLevel {
 
   static LogLevel? fromJson(dynamic value) => LogLevelTypeTransformer().decode(value);
 
-  static List<LogLevel>? listFromJson(dynamic json, {bool growable = false,}) {
+  static List<LogLevel> listFromJson(dynamic json, {bool growable = false,}) {
     final result = <LogLevel>[];
     if (json is List && json.isNotEmpty) {
       for (final row in json) {

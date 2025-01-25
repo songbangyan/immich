@@ -1,122 +1,84 @@
 <script lang="ts">
-  import {
-    notificationController,
-    NotificationType,
-  } from '$lib/components/shared-components/notification/notification';
-  import { api, JobName, SystemConfigJobDto } from '@api';
+  import { getJobName } from '$lib/utils';
+  import { JobName, type SystemConfigDto, type SystemConfigJobDto } from '@immich/sdk';
   import { isEqual } from 'lodash-es';
   import { fade } from 'svelte/transition';
-  import { handleError } from '../../../../utils/handle-error';
-  import SettingButtonsRow from '../setting-buttons-row.svelte';
-  import SettingInputField, { SettingInputFieldType } from '../setting-input-field.svelte';
-  import type { ResetOptions } from '$lib/utils/dipatch';
+  import type { SettingsResetEvent, SettingsSaveEvent } from '../admin-settings';
+  import SettingButtonsRow from '$lib/components/shared-components/settings/setting-buttons-row.svelte';
+  import SettingInputField from '$lib/components/shared-components/settings/setting-input-field.svelte';
+  import { t } from 'svelte-i18n';
+  import { SettingInputFieldType } from '$lib/constants';
 
-  export let jobConfig: SystemConfigJobDto; // this is the config that is being edited
-  export let disabled = false;
+  interface Props {
+    savedConfig: SystemConfigDto;
+    defaultConfig: SystemConfigDto;
+    config: SystemConfigDto;
+    disabled?: boolean;
+    onReset: SettingsResetEvent;
+    onSave: SettingsSaveEvent;
+  }
 
-  let savedConfig: SystemConfigJobDto;
-  let defaultConfig: SystemConfigJobDto;
+  let { savedConfig, defaultConfig, config = $bindable(), disabled = false, onReset, onSave }: Props = $props();
 
   const jobNames = [
     JobName.ThumbnailGeneration,
     JobName.MetadataExtraction,
     JobName.Library,
     JobName.Sidecar,
-    JobName.ObjectTagging,
-    JobName.ClipEncoding,
-    JobName.RecognizeFaces,
+    JobName.SmartSearch,
+    JobName.FaceDetection,
+    JobName.FacialRecognition,
     JobName.VideoConversion,
     JobName.StorageTemplateMigration,
     JobName.Migration,
   ];
 
-  const handleReset = (detail: ResetOptions) => {
-    if (detail.default) {
-      resetToDefault();
-    } else {
-      reset();
-    }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function isSystemConfigJobDto(jobName: any): jobName is keyof SystemConfigJobDto {
+    return jobName in config.job;
+  }
+
+  const onsubmit = (event: Event) => {
+    event.preventDefault();
   };
-
-  async function getConfigs() {
-    [savedConfig, defaultConfig] = await Promise.all([
-      api.systemConfigApi.getConfig().then((res) => res.data.job),
-      api.systemConfigApi.getConfigDefaults().then((res) => res.data.job),
-    ]);
-  }
-
-  async function saveSetting() {
-    try {
-      const { data: configs } = await api.systemConfigApi.getConfig();
-
-      const result = await api.systemConfigApi.updateConfig({
-        systemConfigDto: {
-          ...configs,
-          job: jobConfig,
-        },
-      });
-
-      jobConfig = { ...result.data.job };
-      savedConfig = { ...result.data.job };
-
-      notificationController.show({ message: 'Job settings saved', type: NotificationType.Info });
-    } catch (error) {
-      handleError(error, 'Unable to save settings');
-    }
-  }
-
-  async function reset() {
-    const { data: resetConfig } = await api.systemConfigApi.getConfig();
-
-    jobConfig = { ...resetConfig.job };
-    savedConfig = { ...resetConfig.job };
-
-    notificationController.show({
-      message: 'Reset Job settings to the recent saved settings',
-      type: NotificationType.Info,
-    });
-  }
-
-  async function resetToDefault() {
-    const { data: configs } = await api.systemConfigApi.getConfigDefaults();
-
-    jobConfig = { ...configs.job };
-    defaultConfig = { ...configs.job };
-
-    notificationController.show({
-      message: 'Reset Job settings to default',
-      type: NotificationType.Info,
-    });
-  }
 </script>
 
 <div>
-  {#await getConfigs() then}
-    <div in:fade={{ duration: 500 }}>
-      <form autocomplete="off" on:submit|preventDefault>
-        {#each jobNames as jobName}
-          <div class="ml-4 mt-4 flex flex-col gap-4">
+  <div in:fade={{ duration: 500 }}>
+    <form autocomplete="off" {onsubmit}>
+      {#each jobNames as jobName}
+        <div class="ml-4 mt-4 flex flex-col gap-4">
+          {#if isSystemConfigJobDto(jobName)}
             <SettingInputField
               inputType={SettingInputFieldType.NUMBER}
               {disabled}
-              label="{api.getJobName(jobName)} Concurrency"
-              desc=""
-              bind:value={jobConfig[jobName].concurrency}
+              label={$t('admin.job_concurrency', { values: { job: $getJobName(jobName) } })}
+              description=""
+              bind:value={config.job[jobName].concurrency}
               required={true}
-              isEdited={!(jobConfig[jobName].concurrency == savedConfig[jobName].concurrency)}
+              isEdited={!(config.job[jobName].concurrency == savedConfig.job[jobName].concurrency)}
             />
-          </div>
-        {/each}
-
-        <div class="ml-4">
-          <SettingButtonsRow
-            on:reset={({ detail }) => handleReset(detail)}
-            on:save={saveSetting}
-            showResetToDefault={!isEqual(savedConfig, defaultConfig)}
-            {disabled}
-          />
+          {:else}
+            <SettingInputField
+              inputType={SettingInputFieldType.NUMBER}
+              label={$t('admin.job_concurrency', { values: { job: $getJobName(jobName) } })}
+              description=""
+              value="1"
+              disabled={true}
+              title={$t('admin.job_not_concurrency_safe')}
+            />
+          {/if}
         </div>
-      </form>
-    </div>
-  {/await}
+      {/each}
+
+      <div class="ml-4">
+        <SettingButtonsRow
+          onReset={(options) => onReset({ ...options, configKeys: ['job'] })}
+          onSave={() => onSave({ job: config.job })}
+          showResetToDefault={!isEqual(savedConfig.job, defaultConfig.job)}
+          {disabled}
+        />
+      </div>
+    </form>
+  </div>
 </div>

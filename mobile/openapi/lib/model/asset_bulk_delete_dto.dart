@@ -1,7 +1,7 @@
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
-// @dart=2.12
+// @dart=2.18
 
 // ignore_for_file: unused_element, unused_import
 // ignore_for_file: always_put_required_named_parameters_first
@@ -29,8 +29,8 @@ class AssetBulkDeleteDto {
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is AssetBulkDeleteDto &&
-     other.force == force &&
-     other.ids == ids;
+    other.force == force &&
+    _deepEquality.equals(other.ids, ids);
 
   @override
   int get hashCode =>
@@ -56,13 +56,14 @@ class AssetBulkDeleteDto {
   /// [value] if it's a [Map], null otherwise.
   // ignore: prefer_constructors_over_static_methods
   static AssetBulkDeleteDto? fromJson(dynamic value) {
+    upgradeDto(value, "AssetBulkDeleteDto");
     if (value is Map) {
       final json = value.cast<String, dynamic>();
 
       return AssetBulkDeleteDto(
         force: mapValueOfType<bool>(json, r'force'),
-        ids: json[r'ids'] is List
-            ? (json[r'ids'] as List).cast<String>()
+        ids: json[r'ids'] is Iterable
+            ? (json[r'ids'] as Iterable).cast<String>().toList(growable: false)
             : const [],
       );
     }

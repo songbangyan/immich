@@ -1,7 +1,7 @@
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
-// @dart=2.12
+// @dart=2.18
 
 // ignore_for_file: unused_element, unused_import
 // ignore_for_file: always_put_required_named_parameters_first
@@ -34,7 +34,7 @@ class ReactionType {
 
   static ReactionType? fromJson(dynamic value) => ReactionTypeTypeTransformer().decode(value);
 
-  static List<ReactionType>? listFromJson(dynamic json, {bool growable = false,}) {
+  static List<ReactionType> listFromJson(dynamic json, {bool growable = false,}) {
     final result = <ReactionType>[];
     if (json is List && json.isNotEmpty) {
       for (final row in json) {

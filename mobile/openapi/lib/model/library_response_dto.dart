@@ -1,7 +1,7 @@
 //
 // AUTO-GENERATED FILE, DO NOT MODIFY!
 //
-// @dart=2.12
+// @dart=2.18
 
 // ignore_for_file: unused_element, unused_import
 // ignore_for_file: always_put_required_named_parameters_first
@@ -21,7 +21,6 @@ class LibraryResponseDto {
     required this.name,
     required this.ownerId,
     required this.refreshedAt,
-    required this.type,
     required this.updatedAt,
   });
 
@@ -41,22 +40,19 @@ class LibraryResponseDto {
 
   DateTime? refreshedAt;
 
-  LibraryType type;
-
   DateTime updatedAt;
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is LibraryResponseDto &&
-     other.assetCount == assetCount &&
-     other.createdAt == createdAt &&
-     other.exclusionPatterns == exclusionPatterns &&
-     other.id == id &&
-     other.importPaths == importPaths &&
-     other.name == name &&
-     other.ownerId == ownerId &&
-     other.refreshedAt == refreshedAt &&
-     other.type == type &&
-     other.updatedAt == updatedAt;
+    other.assetCount == assetCount &&
+    other.createdAt == createdAt &&
+    _deepEquality.equals(other.exclusionPatterns, exclusionPatterns) &&
+    other.id == id &&
+    _deepEquality.equals(other.importPaths, importPaths) &&
+    other.name == name &&
+    other.ownerId == ownerId &&
+    other.refreshedAt == refreshedAt &&
+    other.updatedAt == updatedAt;
 
   @override
   int get hashCode =>
@@ -69,11 +65,10 @@ class LibraryResponseDto {
     (name.hashCode) +
     (ownerId.hashCode) +
     (refreshedAt == null ? 0 : refreshedAt!.hashCode) +
-    (type.hashCode) +
     (updatedAt.hashCode);
 
   @override
-  String toString() => 'LibraryResponseDto[assetCount=$assetCount, createdAt=$createdAt, exclusionPatterns=$exclusionPatterns, id=$id, importPaths=$importPaths, name=$name, ownerId=$ownerId, refreshedAt=$refreshedAt, type=$type, updatedAt=$updatedAt]';
+  String toString() => 'LibraryResponseDto[assetCount=$assetCount, createdAt=$createdAt, exclusionPatterns=$exclusionPatterns, id=$id, importPaths=$importPaths, name=$name, ownerId=$ownerId, refreshedAt=$refreshedAt, updatedAt=$updatedAt]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -89,7 +84,6 @@ class LibraryResponseDto {
     } else {
     //  json[r'refreshedAt'] = null;
     }
-      json[r'type'] = this.type;
       json[r'updatedAt'] = this.updatedAt.toUtc().toIso8601String();
     return json;
   }
@@ -98,24 +92,24 @@ class LibraryResponseDto {
   /// [value] if it's a [Map], null otherwise.
   // ignore: prefer_constructors_over_static_methods
   static LibraryResponseDto? fromJson(dynamic value) {
+    upgradeDto(value, "LibraryResponseDto");
     if (value is Map) {
       final json = value.cast<String, dynamic>();
 
       return LibraryResponseDto(
         assetCount: mapValueOfType<int>(json, r'assetCount')!,
-        createdAt: mapDateTime(json, r'createdAt', '')!,
-        exclusionPatterns: json[r'exclusionPatterns'] is List
-            ? (json[r'exclusionPatterns'] as List).cast<String>()
+        createdAt: mapDateTime(json, r'createdAt', r'')!,
+        exclusionPatterns: json[r'exclusionPatterns'] is Iterable
+            ? (json[r'exclusionPatterns'] as Iterable).cast<String>().toList(growable: false)
             : const [],
         id: mapValueOfType<String>(json, r'id')!,
-        importPaths: json[r'importPaths'] is List
-            ? (json[r'importPaths'] as List).cast<String>()
+        importPaths: json[r'importPaths'] is Iterable
+            ? (json[r'importPaths'] as Iterable).cast<String>().toList(growable: false)
             : const [],
         name: mapValueOfType<String>(json, r'name')!,
         ownerId: mapValueOfType<String>(json, r'ownerId')!,
-        refreshedAt: mapDateTime(json, r'refreshedAt', ''),
-        type: LibraryType.fromJson(json[r'type'])!,
-        updatedAt: mapDateTime(json, r'updatedAt', '')!,
+        refreshedAt: mapDateTime(json, r'refreshedAt', r''),
+        updatedAt: mapDateTime(json, r'updatedAt', r'')!,
       );
     }
     return null;
@@ -171,7 +165,6 @@ class LibraryResponseDto {
     'name',
     'ownerId',
     'refreshedAt',
-    'type',
     'updatedAt',
   };
 }
