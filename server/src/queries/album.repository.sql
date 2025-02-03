@@ -202,13 +202,13 @@ order by
 -- AlbumRepository.getMetadataForIds
 select
   "albums"."id" as "albumId",
-  min("assets"."fileCreatedAt") as "startDate",
-  max("assets"."fileCreatedAt") as "endDate",
+  min("assets"."localDateTime") as "startDate",
+  max("assets"."localDateTime") as "endDate",
   count("assets"."id")::int as "assetCount"
 from
   "albums"
-  left join "albums_assets_assets" as "album_assets" on "album_assets"."albumsId" = "albums"."id"
-  left join "assets" on "assets"."id" = "album_assets"."assetsId"
+  inner join "albums_assets_assets" as "album_assets" on "album_assets"."albumsId" = "albums"."id"
+  inner join "assets" on "assets"."id" = "album_assets"."assetsId"
 where
   "albums"."id" in ($1)
   and "assets"."deletedAt" is null
